@@ -21,7 +21,7 @@ load_dotenv()
 # Configuration of telegram API key in this dir also needed.
 # import telegram_send
 
-logfile = os.getenv("SLEEP_DATA_PATH") + '/sleepy_logs.log'
+logfile = os.getenv("SLEEP_DATA_PATH",os.getcwd()) + '/sleepy_logs.log'
 logging.basicConfig(filename=logfile,
                     filemode='a+',
                     format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
@@ -208,7 +208,7 @@ class SleepyBaby():
     @debounce(180)
     def need_to_clean_this_up(self, wake_status, img):
         str_timestamp = str(int(time.time()))
-        sleep_data_base_path = os.getenv("SLEEP_DATA_PATH")
+        sleep_data_base_path = logfile
         p = sleep_data_base_path + '/' + str_timestamp + '.png'
         if wake_status: # woke up
             log_string = "1," + str_timestamp + "\n"
@@ -367,7 +367,10 @@ class SleepyBaby():
 
     # This basically does the same thing as the live version, but is very useful for testing
     def recorded(self):
-        cap = cv2.VideoCapture(os.getenv("VIDEO_PATH"))
+        if video:=os.getenv("VIDEO_PATH", None) is None:
+            print("No video path specified, exiting")
+            return
+        cap = cv2.VideoCapture(video)
         success, img = cap.read()
         while success:
             frame = None
@@ -545,10 +548,13 @@ _thread.start_new_thread(start_server, ())
 
 def receive(producer_q):
     print("Start receiving frames.")
-    cam_ip = os.environ['CAM_IP']
-    cam_pw = os.environ['CAM_PW']
-    connect_str = "rtsp://admin:" + cam_pw + "@" + cam_ip
-    connect_str2 = connect_str + ":554" + "//h264Preview_01_main" # this might be different depending on camera used
+    cam_ip = os.getenv("CAM_IP", "localhost")
+    cam_port = os.getenv("CAM_PORT", 554)
+    cam_pw = os.getenv("CAM_PW", None)
+    cam_path = os.getenv("CAM_PATH", "/h264Preview_01_main")
+    
+    connect_str = f"rtsp://admin:{cam_pw}@{cam_ip}"
+    connect_str2 = f"{connect_str}:{cam_port}/{cam_path}" # this might be different depending on camera used
 
     os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = 'rtsp_transport;tcp' # Use tcp instead of udp if stream is unstable
     c = cv2.VideoCapture(connect_str)
