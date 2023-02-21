@@ -367,10 +367,10 @@ class SleepyBaby():
 
     # This basically does the same thing as the live version, but is very useful for testing
     def recorded(self):
-        if video:=os.getenv("VIDEO_PATH", None) is None:
+        if os.getenv("VIDEO_PATH", None) is None:
             print("No video path specified, exiting")
             return
-        cap = cv2.VideoCapture(video)
+        cap = cv2.VideoCapture(os.getenv("VIDEO_PATH"))
         success, img = cap.read()
         while success:
             frame = None
@@ -575,11 +575,11 @@ def receive(producer_q):
 # Had to split frame receive and processing into different threads due to underlying FFMPEG issue. Read more here:
 # https://stackoverflow.com/questions/49233433/opencv-read-errorh264-0x8f915e0-error-while-decoding-mb-53-20-bytestream
 # Current solution is to insert into deque on the thread receiving images, and process on the other
-p1 = Thread(target=receive, args=(frame_q,))
-p2 = Thread(target=sleepy_baby.live, args=(frame_q,))
-p1.start()
-p2.start()
+# p1 = Thread(target=receive, args=(frame_q,))
+# p2 = Thread(target=sleepy_baby.live, args=(frame_q,))
+# p1.start()
+# p2.start()
 
 # Note: to test w/ recorded footage, comment out above threads, and uncomment next line
 # TODO: use command line args rather than commenting out code
-# sleepy_baby.recorded()
+sleepy_baby.recorded()
