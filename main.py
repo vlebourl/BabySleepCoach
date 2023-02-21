@@ -550,11 +550,17 @@ def receive(producer_q):
     print("Start receiving frames.")
     cam_ip = os.getenv("CAM_IP", "localhost")
     cam_port = os.getenv("CAM_PORT", 554)
+    cam_path = os.getenv("CAM_PATH", "")
+    cam_user = os.getenv("CAM_USER", None)
     cam_pw = os.getenv("CAM_PW", None)
-    cam_path = os.getenv("CAM_PATH", "/h264Preview_01_main")
     
-    connect_str = f"rtsp://admin:{cam_pw}@{cam_ip}"
-    connect_str2 = f"{connect_str}:{cam_port}/{cam_path}" # this might be different depending on camera used
+    connect_str = "rtsp://"
+    if cam_user is not None:
+        connect_str = f"connect_str}{cam_user}"
+    if cam_pw is not None:
+        connect_str = f"{connect_str}:{cam_pw}@"
+    connect_str = f"{connect_str}{cam_ip}"
+    connect_str = f"{connect_str}:{cam_port}{cam_path}" # this might be different depending on camera used
 
     os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = 'rtsp_transport;tcp' # Use tcp instead of udp if stream is unstable
     c = cv2.VideoCapture(connect_str)
