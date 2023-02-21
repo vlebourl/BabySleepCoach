@@ -559,8 +559,7 @@ def receive(producer_q):
         connect_str = f"{connect_str}{cam_user}"
     if cam_pw is not None:
         connect_str = f"{connect_str}:{cam_pw}@"
-    connect_str = f"{connect_str}{cam_ip}"
-    connect_str = f"{connect_str}:{cam_port}{cam_path}" # this might be different depending on camera used
+    connect_str = f"{connect_str}{cam_ip}:{cam_port}{cam_path}" # this might be different depending on camera used
 
     os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = 'rtsp_transport;tcp' # Use tcp instead of udp if stream is unstable
     c = cv2.VideoCapture(connect_str)
