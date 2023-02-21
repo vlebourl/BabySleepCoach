@@ -140,7 +140,11 @@ class SleepyBaby():
 
             if os.getenv("DEBUG", 'False').lower() in ('true', '1'):
                 CUTOFF_THRESHOLD = 10  # head and face
-                MY_CONNECTIONS = frozenset([t for t in self.mpPose.POSE_CONNECTIONS if t[0] > CUTOFF_THRESHOLD and t[1] > CUTOFF_THRESHOLD])
+                MY_CONNECTIONS = frozenset(
+                    t
+                    for t in self.mpPose.POSE_CONNECTIONS
+                    if t[0] > CUTOFF_THRESHOLD and t[1] > CUTOFF_THRESHOLD
+                )
 
                 # if results_pose.pose_landmarks:  # if it finds the points
                 #     for landmark_id, landmark in enumerate(results_pose.pose_landmarks):
@@ -159,15 +163,15 @@ class SleepyBaby():
 
                 self.mpDraw.draw_landmarks(debug_img, results_pose.pose_landmarks, MY_CONNECTIONS, landmark_drawing_spec=self.mpDraw.DrawingSpec(color=(255, 0, 0), thickness=2, circle_radius=2))
 
-                # self.mpDraw.draw_landmarks(debug_img, results_pose.pose_landmarks, MY_CONNECTIONS)
-                # for id, lm in enumerate(results_pose.pose_landmarks.landmark):
-                #     if id < CUTOFF_THRESHOLD:
-                #         continue
-                #     self.mpDraw.draw_landmarks(debug_img, results_pose.pose_landmarks, MY_CONNECTIONS)
-                #     h, w,c = debug_img.shape
-                #     # print(id, lm)
-                #     cx, cy = int(lm.x*w), int(lm.y*h)
-                #     cv2.circle(debug_img, (cx, cy), 5, (255,0,0), cv2.FILLED)
+                        # self.mpDraw.draw_landmarks(debug_img, results_pose.pose_landmarks, MY_CONNECTIONS)
+                        # for id, lm in enumerate(results_pose.pose_landmarks.landmark):
+                        #     if id < CUTOFF_THRESHOLD:
+                        #         continue
+                        #     self.mpDraw.draw_landmarks(debug_img, results_pose.pose_landmarks, MY_CONNECTIONS)
+                        #     h, w,c = debug_img.shape
+                        #     # print(id, lm)
+                        #     cx, cy = int(lm.x*w), int(lm.y*h)
+                        #     cv2.circle(debug_img, (cx, cy), 5, (255,0,0), cv2.FILLED)
         else:
             body_found = False
             self.throttled_handle_no_body_found()
@@ -185,8 +189,9 @@ class SleepyBaby():
 
             # If mouth is open, override and just consider it, "eyes open", pushing in direction of "wake vote"
             if eyes_are_open == 0: # if eyes are closed, then check if mouth is open
-                mouth_is_open = check_mouth_open(results.multi_face_landmarks[0].landmark)
-                if mouth_is_open:
+                if mouth_is_open := check_mouth_open(
+                    results.multi_face_landmarks[0].landmark
+                ):
                     logging.info('Eyes closed, mouth open, crying or yawning, consider awake.')
                     self.eyes_open_q.append(1)
                 else:
@@ -198,7 +203,7 @@ class SleepyBaby():
 
         else: # no face results, interpret this as baby is not in crib, i.e. awake
             self.throttled_handle_no_eyes_found()
- 
+
         return debug_img, body_found
 
 
@@ -209,12 +214,12 @@ class SleepyBaby():
     def need_to_clean_this_up(self, wake_status, img):
         str_timestamp = str(int(time.time()))
         sleep_data_base_path = os.getenv("SLEEP_DATA_PATH")
-        p = sleep_data_base_path + '/' + str_timestamp + '.png'
+        p = f'{sleep_data_base_path}/{str_timestamp}.png'
         if wake_status: # woke up
-            log_string = "1," + str_timestamp + "\n"
+            log_string = f"1,{str_timestamp}" + "\n"
             print(log_string)
             logging.info(log_string)
-            with open(sleep_data_base_path + '/sleep_logs.csv', 'a+', encoding="utf-8") as f:
+            with open(f'{sleep_data_base_path}/sleep_logs.csv', 'a+', encoding="utf-8") as f:
                 f.write(log_string)
             cv2.imwrite(p, img) # store off image of when wake/sleep event occurred. Can help with debugging issues
 
@@ -233,10 +238,10 @@ class SleepyBaby():
                 self.ser.write(bytes(str(999999) + "\n", "utf-8"))
                 self.cast_service.play_sound()
         else: # fell asleep
-            log_string = "0," + str_timestamp + "\n"
+            log_string = f"0,{str_timestamp}" + "\n"
             print(log_string)
             logging.info(log_string)
-            with open(sleep_data_base_path + '/sleep_logs.csv', 'a+', encoding="utf-8") as f:
+            with open(f'{sleep_data_base_path}/sleep_logs.csv', 'a+', encoding="utf-8") as f:
                 f.write(log_string)
             cv2.imwrite(p, img)
             self.is_awake = False
@@ -316,7 +321,7 @@ class SleepyBaby():
     @debounce(5)
     def periodic_wakeness_check(self):
         print('\n', 'Is baby awake:', self.is_awake, '\n')
-        logging.info('Is baby awake: {}'.format(str(self.is_awake)))
+        logging.info(f'Is baby awake: {str(self.is_awake)}')
 
 
     def frame_logic(self, raw_img):
@@ -338,7 +343,7 @@ class SleepyBaby():
 
         if os.getenv("DEBUG", 'False').lower() in ('true', '1'):
             avg_awake = sum(self.awake_q) / len(self.awake_q)
-            
+
             # draw progress bar
             bar_y_offset = 0
             bar_y_offset = 100
@@ -348,7 +353,7 @@ class SleepyBaby():
             start_point = (int(w/2 - bar_width/2), 350 + bar_y_offset)
 
             end_point = (int(w/2 + bar_width/2), 370 + bar_y_offset)
-            adj_avg_awake = 1.0 if avg_awake / .6 >= 1.0 else avg_awake / .6
+            adj_avg_awake = 1.0 if avg_awake >= 0.6 else avg_awake / .6
             progress_end_point = (int(w/2 - bar_width/2 + (bar_width*(adj_avg_awake))), 370 + bar_y_offset)
 
             color = (255, 255, 117)
@@ -358,8 +363,17 @@ class SleepyBaby():
             debug_img = cv2.rectangle(debug_img, start_point, end_point, color, thickness)
             debug_img = cv2.rectangle(debug_img, start_point, progress_end_point, progress_color, thickness)
             display_perc = int((avg_awake * 100) / 0.6)
-            display_perc = 100 if display_perc >= 100 else display_perc
-            debug_img = cv2.putText(debug_img, str(display_perc) + "%", (int(w/2 - bar_width/2), 330 + bar_y_offset), 2, 1, (255,0,0), 2, 2)
+            display_perc = min(display_perc, 100)
+            debug_img = cv2.putText(
+                debug_img,
+                f"{str(display_perc)}%",
+                (int(w / 2 - bar_width / 2), 330 + bar_y_offset),
+                2,
+                1,
+                (255, 0, 0),
+                2,
+                2,
+            )
             debug_img = cv2.putText(debug_img, "Awake", (int(w/2 - bar_width/2 + 85), 330 + bar_y_offset), 2, 1, (255,0,0), 2, 2)
 
         return debug_img
@@ -547,8 +561,8 @@ def receive(producer_q):
     print("Start receiving frames.")
     cam_ip = os.environ['CAM_IP']
     cam_pw = os.environ['CAM_PW']
-    connect_str = "rtsp://admin:" + cam_pw + "@" + cam_ip
-    connect_str2 = connect_str + ":554" + "//h264Preview_01_main" # this might be different depending on camera used
+    connect_str = f"rtsp://admin:{cam_pw}@{cam_ip}"
+    connect_str2 = f"{connect_str}:554//h264Preview_01_main"
 
     os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = 'rtsp_transport;tcp' # Use tcp instead of udp if stream is unstable
     c = cv2.VideoCapture(connect_str)

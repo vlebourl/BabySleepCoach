@@ -34,11 +34,7 @@ def closed_ratio(img, debug_img, landmarks, left_eye_indices, right_eye_indices)
     lhDistance = euclidean(lh_right, lh_left)
     reRatio = rhDistance/rvDistance
     leRatio = lhDistance/lvDistance
-    ratio = (reRatio + leRatio)/2
-
-    # print('reRatio: ', reRatio)
-    # print('leRatio: ', leRatio)
-    return ratio
+    return (reRatio + leRatio)/2
 
 
 def set_hatch(is_awake):
@@ -53,10 +49,7 @@ def set_hatch(is_awake):
 def check_eyes_open(landmarks, img, debug_img, left_eye_indices, right_eye_indices):
     eyes_closed_ratio = closed_ratio(img, debug_img, landmarks, left_eye_indices, right_eye_indices)
     ratio_threshold = 5
-    if eyes_closed_ratio > ratio_threshold:
-        return 0 # closed
-    else:
-        return 1 # open
+    return 0 if eyes_closed_ratio > ratio_threshold else 1
 
 
 def get_top_lip_height(landmarks):
