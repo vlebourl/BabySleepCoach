@@ -556,7 +556,7 @@ def receive(producer_q):
     
     connect_str = "rtsp://"
     if cam_user is not None:
-        connect_str = f"connect_str}{cam_user}"
+        connect_str = f"{connect_str}{cam_user}"
     if cam_pw is not None:
         connect_str = f"{connect_str}:{cam_pw}@"
     connect_str = f"{connect_str}{cam_ip}"
